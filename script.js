@@ -1,172 +1,142 @@
-/**
- * ResumeKu Pro - Main JavaScript
- */
-
-document.addEventListener('DOMContentLoaded', function() {
-    initTemplateSelector();
+document.addEventListener('DOMContentLoaded', function () {
+    initTemplateSelection();
     initFormListeners();
-    initExperienceEducation();
-    initFAQ();
-    initModal();
-    initFormValidation();
+    initAddButtons();
+    updatePreview();
 });
 
-function initTemplateSelector() {
-    const templateCards = document.querySelectorAll('.template-card');
-    const templateInput = document.getElementById('selectedTemplate');
-    const previewContent = document.getElementById('resumePreview');
-    
-    templateCards.forEach(card => {
-        card.addEventListener('click', function() {
-            templateCards.forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            templateInput.value = this.dataset.template;
-            previewContent.className = `resume-preview-content ${this.dataset.template}`;
+function initTemplateSelection() {
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
             updatePreview();
         });
     });
 }
 
 function initFormListeners() {
-    const form = document.getElementById('resumeForm');
-    form.querySelectorAll('input, textarea').forEach(input => {
-        input.addEventListener('input', debounce(updatePreview, 300));
+    document.querySelectorAll('#resumeForm input, #resumeForm textarea').forEach(el => {
+        el.addEventListener('input', debounce(updatePreview, 300));
     });
+    document.getElementById('refreshPreview')?.addEventListener('click', updatePreview);
 }
 
-function initExperienceEducation() {
-    document.getElementById('addExperience')?.addEventListener('click', addExperienceItem);
-    document.getElementById('addEducation')?.addEventListener('click', addEducationItem);
-}
+function initAddButtons() {
+    document.getElementById('addExperience')?.addEventListener('click', () => {
+        const container = document.getElementById('experienceList');
+        const item = document.createElement('div');
+        item.className = 'experience-item';
+        item.innerHTML = `
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove();updatePreview();">×</button>
+            <div class="form-grid">
+                <div class="form-group"><label>Jawatan</label><input type="text" name="job_title[]" placeholder="Jawatan"></div>
+                <div class="form-group"><label>Syarikat</label><input type="text" name="company[]" placeholder="Syarikat"></div>
+                <div class="form-group"><label>Tarikh Mula</label><input type="text" name="start_date[]" placeholder="Jan 2020"></div>
+                <div class="form-group"><label>Tarikh Tamat</label><input type="text" name="end_date[]" placeholder="Kini"></div>
+                <div class="form-group full"><label>Tanggungjawab</label><textarea name="responsibilities[]" rows="2"></textarea></div>
+            </div>
+        `;
+        container.appendChild(item);
+        item.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', debounce(updatePreview, 300)));
+    });
 
-function addExperienceItem() {
-    const container = document.getElementById('experienceList');
-    const item = document.createElement('div');
-    item.className = 'experience-item';
-    item.innerHTML = `
-        <div class="form-grid">
-            <div class="form-group"><label>Jawatan</label><input type="text" name="exp_title[]" placeholder="Jawatan"></div>
-            <div class="form-group"><label>Syarikat</label><input type="text" name="exp_company[]" placeholder="Syarikat"></div>
-            <div class="form-group"><label>Tarikh Mula</label><input type="month" name="exp_start[]"></div>
-            <div class="form-group"><label>Tarikh Tamat</label><input type="month" name="exp_end[]"></div>
-        </div>
-        <div class="form-group full-width"><label>Tanggungjawab</label><textarea name="exp_desc[]" rows="3"></textarea></div>
-        <button type="button" class="btn btn-small" style="background:rgba(239,68,68,0.2);color:#ef4444;margin-top:10px" onclick="this.parentElement.remove();updatePreview()">Padam</button>
-    `;
-    container.appendChild(item);
-    item.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', debounce(updatePreview, 300)));
-}
-
-function addEducationItem() {
-    const container = document.getElementById('educationList');
-    const item = document.createElement('div');
-    item.className = 'education-item';
-    item.innerHTML = `
-        <div class="form-grid">
-            <div class="form-group"><label>Kelayakan</label><input type="text" name="edu_degree[]"></div>
-            <div class="form-group"><label>Institusi</label><input type="text" name="edu_school[]"></div>
-            <div class="form-group"><label>Tahun</label><input type="number" name="edu_year[]" min="1970" max="2030"></div>
-            <div class="form-group"><label>CGPA</label><input type="text" name="edu_grade[]"></div>
-        </div>
-        <button type="button" class="btn btn-small" style="background:rgba(239,68,68,0.2);color:#ef4444;margin-top:10px" onclick="this.parentElement.remove();updatePreview()">Padam</button>
-    `;
-    container.appendChild(item);
-    item.querySelectorAll('input').forEach(el => el.addEventListener('input', debounce(updatePreview, 300)));
+    document.getElementById('addEducation')?.addEventListener('click', () => {
+        const container = document.getElementById('educationList');
+        const item = document.createElement('div');
+        item.className = 'education-item';
+        item.innerHTML = `
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove();updatePreview();">×</button>
+            <div class="form-grid">
+                <div class="form-group"><label>Kelayakan</label><input type="text" name="qualification[]" placeholder="Kelayakan"></div>
+                <div class="form-group"><label>Institusi</label><input type="text" name="institution[]" placeholder="Institusi"></div>
+                <div class="form-group"><label>Tahun</label><input type="text" name="edu_year[]" placeholder="2020"></div>
+            </div>
+        `;
+        container.appendChild(item);
+        item.querySelectorAll('input').forEach(el => el.addEventListener('input', debounce(updatePreview, 300)));
+    });
 }
 
 function updatePreview() {
     const preview = document.getElementById('resumePreview');
     const form = document.getElementById('resumeForm');
-    const fd = new FormData(form);
-    
-    const data = {
-        fullName: fd.get('fullName') || '',
-        jobTitle: fd.get('jobTitle') || '',
-        email: fd.get('email') || '',
-        phone: fd.get('phone') || '',
-        location: fd.get('location') || '',
-        linkedin: fd.get('linkedin') || '',
-        summary: fd.get('summary') || '',
-        skills: fd.get('skills') || '',
-        languages: fd.get('languages') || ''
-    };
-    
-    if (!data.fullName && !data.jobTitle && !data.email) {
-        preview.innerHTML = '<div class="preview-placeholder"><p>Mula isi borang untuk lihat pratonton</p></div>';
+    const data = new FormData(form);
+
+    const fullname = data.get('fullname') || '';
+    const email = data.get('email') || '';
+    const phone = data.get('phone') || '';
+    const location = data.get('location') || '';
+    const summary = data.get('summary') || '';
+    const skills = data.get('skills') || '';
+
+    const jobs = data.getAll('job_title[]');
+    const companies = data.getAll('company[]');
+    const startDates = data.getAll('start_date[]');
+    const endDates = data.getAll('end_date[]');
+    const responsibilities = data.getAll('responsibilities[]');
+
+    const qualifications = data.getAll('qualification[]');
+    const institutions = data.getAll('institution[]');
+    const eduYears = data.getAll('edu_year[]');
+
+    if (!fullname && !email) {
+        preview.innerHTML = '<div class="preview-placeholder"><span>📄</span><p>Isi maklumat untuk lihat pratonton</p></div>';
         return;
     }
-    
-    let expHTML = '';
-    fd.getAll('exp_title[]').forEach((t, i) => {
-        if (t || fd.getAll('exp_company[]')[i]) {
-            expHTML += `<div class="exp-item"><div class="exp-header"><span class="exp-title">${esc(t)}</span></div><div class="exp-company">${esc(fd.getAll('exp_company[]')[i])}</div><div class="exp-desc">${esc(fd.getAll('exp_desc[]')[i])}</div></div>`;
+
+    let experienceHtml = '';
+    jobs.forEach((job, i) => {
+        if (job || companies[i]) {
+            experienceHtml += `
+                <div class="exp-item">
+                    <div class="exp-title">${job || 'Jawatan'}</div>
+                    <div class="exp-company">${companies[i] || ''} | ${startDates[i] || ''} - ${endDates[i] || ''}</div>
+                    <div class="exp-desc">${responsibilities[i] || ''}</div>
+                </div>
+            `;
         }
     });
-    
-    let eduHTML = '';
-    fd.getAll('edu_degree[]').forEach((d, i) => {
-        if (d || fd.getAll('edu_school[]')[i]) {
-            eduHTML += `<div class="edu-item"><span class="edu-degree">${esc(d)}</span> - ${esc(fd.getAll('edu_school[]')[i])} (${fd.getAll('edu_year[]')[i]})</div>`;
+
+    let educationHtml = '';
+    qualifications.forEach((qual, i) => {
+        if (qual || institutions[i]) {
+            educationHtml += `<div class="edu-item"><strong>${qual || ''}</strong> - ${institutions[i] || ''} (${eduYears[i] || ''})</div>`;
         }
     });
-    
-    let skillsHTML = data.skills ? `<div class="skills-list">${data.skills.split(',').map(s => `<span class="skill-tag">${esc(s.trim())}</span>`).join('')}</div>` : '';
-    
+
     preview.innerHTML = `
-        <div class="resume-name">${esc(data.fullName)}</div>
-        <div class="resume-title">${esc(data.jobTitle)}</div>
-        <div class="resume-contact">${[data.email, data.phone, data.location].filter(Boolean).join(' | ')}</div>
-        ${data.summary ? `<div class="section-content"><div class="section-title-preview">Ringkasan</div><p>${esc(data.summary)}</p></div>` : ''}
-        ${expHTML ? `<div class="section-content"><div class="section-title-preview">Pengalaman</div>${expHTML}</div>` : ''}
-        ${eduHTML ? `<div class="section-content"><div class="section-title-preview">Pendidikan</div>${eduHTML}</div>` : ''}
-        ${skillsHTML ? `<div class="section-content"><div class="section-title-preview">Kemahiran</div>${skillsHTML}</div>` : ''}
-        ${data.languages ? `<div class="section-content"><div class="section-title-preview">Bahasa</div><p>${esc(data.languages)}</p></div>` : ''}
+        <div class="resume-header">
+            <h2>${fullname || 'Nama Anda'}</h2>
+            <p>${[email, phone, location].filter(Boolean).join(' | ')}</p>
+        </div>
+        ${summary ? `<div class="resume-section"><h3>Ringkasan</h3><p>${summary}</p></div>` : ''}
+        ${experienceHtml ? `<div class="resume-section"><h3>Pengalaman</h3>${experienceHtml}</div>` : ''}
+        ${educationHtml ? `<div class="resume-section"><h3>Pendidikan</h3>${educationHtml}</div>` : ''}
+        ${skills ? `<div class="resume-section"><h3>Kemahiran</h3><p>${skills}</p></div>` : ''}
     `;
-    
-    document.getElementById('resumeDataField').value = JSON.stringify(Object.fromEntries(fd));
+
+    // Save data to localStorage for after payment
+    saveResumeData();
 }
 
-function initFAQ() {
-    document.querySelectorAll('.faq-item').forEach(item => {
-        item.querySelector('.faq-question').addEventListener('click', () => {
-            document.querySelectorAll('.faq-item').forEach(o => o !== item && o.classList.remove('active'));
-            item.classList.toggle('active');
-        });
-    });
-}
-
-function initModal() {
-    const modal = document.getElementById('previewModal');
-    document.getElementById('previewBtn')?.addEventListener('click', () => {
-        document.getElementById('modalPreview').innerHTML = document.getElementById('resumePreview').innerHTML;
-        modal.classList.add('active');
-    });
-    document.getElementById('closeModal')?.addEventListener('click', () => modal.classList.remove('active'));
-    modal.addEventListener('click', e => e.target === modal && modal.classList.remove('active'));
-}
-
-function initFormValidation() {
-    document.getElementById('checkoutForm')?.addEventListener('submit', function(e) {
-        const n = document.getElementById('fullName').value.trim();
-        const j = document.getElementById('jobTitle').value.trim();
-        const m = document.getElementById('email').value.trim();
-        if (!n || !j || !m) {
-            e.preventDefault();
-            alert('Sila isi semua maklumat wajib (*) sebelum meneruskan.');
-            return false;
+function saveResumeData() {
+    const form = document.getElementById('resumeForm');
+    const data = new FormData(form);
+    const resumeData = {};
+    for (let [key, value] of data.entries()) {
+        if (key.endsWith('[]')) {
+            const k = key.slice(0, -2);
+            if (!resumeData[k]) resumeData[k] = [];
+            resumeData[k].push(value);
+        } else {
+            resumeData[key] = value;
         }
-        updatePreview();
-    });
+    }
+    localStorage.setItem('resumeData', JSON.stringify(resumeData));
 }
 
 function debounce(fn, wait) {
     let t;
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
-}
-
-function esc(s) {
-    if (!s) return '';
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
 }

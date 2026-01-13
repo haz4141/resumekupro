@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berjaya - ResumeKu Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .success-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .success-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 48px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 36px;
+        }
+
+        .success-card h1 {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .success-card .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="success-page">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <h1>Pembayaran Berjaya! 🎉</h1>
+            <p class="subtitle">Resume anda sedia untuk dimuat turun.</p>
+            <button id="downloadPdf" class="btn btn-primary btn-large btn-full">📥 Muat Turun Resume PDF</button>
+            <br><br>
+            <a href="index.html" class="btn btn-secondary">← Kembali</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        document.getElementById('downloadPdf').addEventListener('click', function () {
+            const resumeData = JSON.parse(localStorage.getItem('resumeData') || '{}');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 20;
+
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text(resumeData.fullname || 'Nama', 105, y, { align: 'center' });
+            y += 10;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const contact = [resumeData.email, resumeData.phone, resumeData.location].filter(Boolean).join(' | ');
+            doc.text(contact, 105, y, { align: 'center' });
+            y += 15;
+
+            if (resumeData.summary) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('RINGKASAN', 20, y);
+                y += 6;
+                doc.setFont('helvetica', 'normal');
+                const lines = doc.splitTextToSize(resumeData.summary, 170);
+                doc.text(lines, 20, y);
+                y += lines.length * 5 + 10;
+            }
+
+            if (resumeData.job_title && resumeData.job_title.length) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('PENGALAMAN', 20, y);
+                y += 6;
+                resumeData.job_title.forEach((job, i) => {
+                    if (job) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(job, 20, y);
+                        y += 5;
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`${resumeData.company?.[i] || ''} | ${resumeData.start_date?.[i] || ''} - ${resumeData.end_date?.[i] || ''}`, 20, y);
+                        y += 10;
+                    }
+                });
+            }
+
+            if (resumeData.skills) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('KEMAHIRAN', 20, y);
+                y += 6;
+                doc.setFont('helvetica', 'normal');
+                doc.text(resumeData.skills, 20, y);
+            }
+
+            doc.save('Resume_' + (resumeData.fullname || 'Resume').replace(/\s+/g, '_') + '.pdf');
+        });
+    </script>
+</body>
+
+</html>
